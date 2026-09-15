@@ -1,0 +1,328 @@
+-- Sơn Lâm Hub - MM2 Perfect Center Aim Circle (Shifted Up & No Shoot Button)
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Camera = Workspace.CurrentCamera
+
+_G.ESPInnocent, _G.ESPSheriff, _G.ESPMurderer = false, false, false
+_G.AimbotSheriff, _G.AimbotMurderer = false, false
+_G.Noclip, _G.Flying, _G.FlySpeed = false, false, 60
+
+local FOVRadius = 50
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name, ScreenGui.ResetOnSpawn = "SonLamMM2PerfectCenterGui", false
+
+local function Create(class, parent, props)
+    local obj = Instance.new(class, parent)
+    for k, v in pairs(props) do obj[k] = v end
+    return obj
+end
+
+local function AddCorner(parent, radius)
+    return Create("UICorner", parent, {CornerRadius = radius or UDim.new(0, 6)})
+end
+
+-- ==================== BẢNG CHÀO MỪNG ====================
+local WelcomeFrame = Create("Frame", ScreenGui, {AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = Color3.fromRGB(15, 15, 15), BorderSizePixel = 0, Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 260, 0, 140), Draggable = true, Active = true})
+AddCorner(WelcomeFrame, UDim.new(0, 8))
+Create("UIStroke", WelcomeFrame, {Color = Color3.fromRGB(0, 255, 127), Thickness = 1.5})
+
+Create("TextLabel", WelcomeFrame, {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 15), Size = UDim2.new(1, -20, 0, 30), Font = Enum.Font.GothamBold, Text = "SƠN LÂM HUB", TextColor3 = Color3.fromRGB(0, 255, 127), TextSize = 16, TextXAlignment = Enum.TextXAlignment.Center})
+Create("TextLabel", WelcomeFrame, {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 45), Size = UDim2.new(1, -20, 0, 20), Font = Enum.Font.GothamSemibold, Text = "Nhấn Bắt Đầu Để Sử Dụng Script", TextColor3 = Color3.fromRGB(200, 200, 200), TextSize = 12, TextXAlignment = Enum.TextXAlignment.Center})
+
+local StartButton = Create("TextButton", WelcomeFrame, {BackgroundColor3 = Color3.fromRGB(0, 255, 127), Position = UDim2.new(0.15, 0, 0.65, 0), Size = UDim2.new(0.7, 0, 0, 35), Font = Enum.Font.GothamBold, Text = "BẮT ĐẦU", TextColor3 = Color3.fromRGB(15, 15, 15), TextSize = 13})
+AddCorner(StartButton, UDim.new(0, 6))
+
+-- ==================== GIAO DIỆN CHÍNH ====================
+local AimCircle = Create("Frame", ScreenGui, {AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, -25), Size = UDim2.new(0, FOVRadius * 2, 0, FOVRadius * 2), Visible = false})
+AddCorner(AimCircle, UDim.new(1, 0))
+Create("UIStroke", AimCircle, {Color = Color3.fromRGB(0, 255, 127), Thickness = 1.5})
+
+local MiniButton = Create("TextButton", ScreenGui, {BackgroundColor3 = Color3.fromRGB(20, 20, 20), BorderColor3 = Color3.fromRGB(0, 255, 127), Position = UDim2.new(0, 15, 0.3, 0), Size = UDim2.new(0, 42, 0, 42), Font = Enum.Font.GothamBold, Text = "HUB", TextColor3 = Color3.fromRGB(0, 255, 127), TextSize = 12, Draggable = true, Active = true, Visible = false})
+AddCorner(MiniButton, UDim.new(1, 0))
+
+local MainFrame = Create("Frame", ScreenGui, {BackgroundColor3 = Color3.fromRGB(15, 15, 15), BorderSizePixel = 0, Position = UDim2.new(0, 65, 0.3, 0), Size = UDim2.new(0, 220, 0, 180), Draggable = true, Active = true, Visible = false})
+AddCorner(MainFrame)
+Create("TextLabel", MainFrame, {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 8), Size = UDim2.new(1, -20, 0, 22), Font = Enum.Font.GothamBold, Text = "SƠN LÂM HUB - MM2", TextColor3 = Color3.fromRGB(0, 255, 127), TextSize = 12})
+
+local CatContainer = Create("ScrollingFrame", MainFrame, {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 35), Size = UDim2.new(1, -20, 1, -45), CanvasSize = UDim2.new(0, 0, 0, 160), ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y})
+Create("UIListLayout", CatContainer, {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8)})
+
+local SubMenu = Create("Frame", MainFrame, {BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, Position = UDim2.new(1, 5, 0, 0), Size = UDim2.new(0, 210, 0, 180), Visible = false})
+AddCorner(SubMenu)
+local SubTitle = Create("TextLabel", SubMenu, {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 8), Size = UDim2.new(1, -20, 0, 22), Font = Enum.Font.GothamBold, Text = "CHI TIẾT", TextColor3 = Color3.fromRGB(0, 255, 127), TextSize = 12})
+local SubList = Create("ScrollingFrame", SubMenu, {BackgroundTransparency = 1, Position = UDim2.new(0, 8, 0, 35), Size = UDim2.new(1, -16, 1, -42), CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y})
+Create("UIListLayout", SubList, {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6)})
+
+local SubSubMenu = Create("Frame", MainFrame, {BackgroundColor3 = Color3.fromRGB(28, 28, 28), BorderSizePixel = 0, Position = UDim2.new(2, 10, 0, 0), Size = UDim2.new(0, 210, 0, 180), Visible = false})
+AddCorner(SubSubMenu)
+local SubSubTitle = Create("TextLabel", SubSubMenu, {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 8), Size = UDim2.new(1, -20, 0, 22), Font = Enum.Font.GothamBold, Text = "CHỌN NGƯỜI CHƠI", TextColor3 = Color3.fromRGB(0, 255, 127), TextSize = 12})
+local SubSubList = Create("ScrollingFrame", SubSubMenu, {BackgroundTransparency = 1, Position = UDim2.new(0, 8, 0, 35), Size = UDim2.new(1, -16, 1, -42), CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarThickness = 3, AutomaticCanvasSize = Enum.AutomaticSize.Y})
+Create("UIListLayout", SubSubList, {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6)})
+
+StartButton.MouseButton1Click:Connect(function()
+    WelcomeFrame.Visible = false
+    MiniButton.Visible = true
+    MainFrame.Visible = true
+end)
+
+local function CreateMainBtn(text, order)
+    local btn = Create("TextButton", CatContainer, {LayoutOrder = order, BackgroundColor3 = Color3.fromRGB(25, 25, 25), BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 34), Font = Enum.Font.GothamBold, Text = "  " .. text .. " ➔", TextColor3 = Color3.fromRGB(255, 255, 255), TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left})
+    AddCorner(btn, UDim.new(0, 5))
+    return btn
+end
+
+local BtnESP = CreateMainBtn("Cài Đặt Định Vị (ESP)", 1)
+local BtnAim = CreateMainBtn("Cài Đặt AimBot / Sát Hại", 2)
+local BtnTele = CreateMainBtn("Chức Năng Dịch Chuyển (Tele)", 3)
+local BtnMisc = CreateMainBtn("Chức Năng Khác (Fly / Noclip)", 4)
+
+local function ClearSub()
+    SubSubMenu.Visible = false
+    for _, v in pairs(SubList:GetChildren()) do if v:IsA("GuiObject") then v:Destroy() end end
+end
+
+local function CreateSubBtn(text, state, callback)
+    local btn = Create("TextButton", SubList, {BackgroundColor3 = state and Color3.fromRGB(20, 40, 25) or Color3.fromRGB(28, 28, 28), BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 34), Font = Enum.Font.GothamSemibold, Text = "  " .. text .. (state and " [ ON ]" or " [ OFF ]"), TextColor3 = state and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(200, 200, 200), TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left})
+    AddCorner(btn, UDim.new(0, 5))
+    btn.MouseButton1Click:Connect(function()
+        local newState = callback()
+        btn.Text = "  " .. text .. (newState and " [ ON ]" or " [ OFF ]")
+        btn.TextColor3 = newState and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(200, 200, 200)
+        btn.BackgroundColor3 = newState and Color3.fromRGB(20, 40, 25) or Color3.fromRGB(28, 28, 28)
+    end)
+    return btn
+end
+
+BtnESP.MouseButton1Click:Connect(function()
+    SubMenu.Visible, SubTitle.Text = true, "CHỌN MỤC ĐỊNH VỊ (ESP)"
+    ClearSub()
+    CreateSubBtn("Người Thường", _G.ESPInnocent, function() _G.ESPInnocent = not _G.ESPInnocent return _G.ESPInnocent end)
+    CreateSubBtn("Cảnh Sát & Người Hùng (Xanh)", _G.ESPSheriff, function() _G.ESPSheriff = not _G.ESPSheriff return _G.ESPSheriff end)
+    CreateSubBtn("Kẻ Giết Người", _G.ESPMurderer, function() _G.ESPMurderer = not _G.ESPMurderer return _G.ESPMurderer end)
+end)
+
+BtnAim.MouseButton1Click:Connect(function()
+    SubMenu.Visible, SubTitle.Text = true, "CHỌN MỤC AIMBOT"
+    ClearSub()
+    CreateSubBtn("Cảnh Sát (Aim Bắn Vào Đầu 100%)", _G.AimbotSheriff, function()
+        _G.AimbotSheriff = not _G.AimbotSheriff
+        AimCircle.Visible = _G.AimbotSheriff
+        return _G.AimbotSheriff
+    end)
+    CreateSubBtn("Kẻ Giết Người (Auto Tele Ghim Đầu - Kill Aura)", _G.AimbotMurderer, function() 
+        _G.AimbotMurderer = not _G.AimbotMurderer 
+        return _G.AimbotMurderer 
+    end)
+end)
+
+BtnTele.MouseButton1Click:Connect(function()
+    SubMenu.Visible, SubTitle.Text = true, "DỊCH CHUYỂN (TELEPORT)"
+    ClearSub()
+    local teleBtn = Create("TextButton", SubList, {BackgroundColor3 = Color3.fromRGB(28, 28, 28), BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 34), Font = Enum.Font.GothamSemibold, Text = "  Tele Tới Người Chơi ➔", TextColor3 = Color3.fromRGB(220, 220, 220), TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left})
+    AddCorner(teleBtn, UDim.new(0, 5))
+    teleBtn.MouseButton1Click:Connect(function()
+        SubSubMenu.Visible = true
+        for _, v in pairs(SubSubList:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LP then
+                local pBtn = Create("TextButton", SubSubList, {BackgroundColor3 = Color3.fromRGB(35, 35, 35), BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 32), Font = Enum.Font.GothamSemibold, Text = "  " .. p.Name, TextColor3 = Color3.fromRGB(220, 220, 220), TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left})
+                AddCorner(pBtn, UDim.new(0, 5))
+                pBtn.MouseButton1Click:Connect(function()
+                    pcall(function()
+                        if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                            LP.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                        end
+                    end)
+                end)
+            end
+        end
+    end)
+end)
+
+local bodyVelocity, bodyGyro
+BtnMisc.MouseButton1Click:Connect(function()
+    SubMenu.Visible, SubTitle.Text = true, "CHỨC NĂNG KHÁC"
+    ClearSub()
+    CreateSubBtn("Đi Xuyên Tường (Noclip)", _G.Noclip, function() _G.Noclip = not _G.Noclip return _G.Noclip end)
+    CreateSubBtn("Bay (Fly)", _G.Flying, function()
+        _G.Flying = not _G.Flying
+        local char = LP.Character
+        if char then
+            local hrp, hum = char:FindFirstChild("HumanoidRootPart"), char:FindFirstChildOfClass("Humanoid")
+            if _G.Flying and hrp and hum then
+                bodyGyro = Create("BodyGyro", hrp, {P = 9e4, MaxTorque = Vector3.new(9e9, 9e9, 9e9), CFrame = hrp.CFrame})
+                bodyVelocity = Create("BodyVelocity", hrp, {Velocity = Vector3.new(0, 0, 0), MaxForce = Vector3.new(9e9, 9e9, 9e9)})
+                hum.PlatformStand = true
+            else
+                if bodyGyro then bodyGyro:Destroy() end
+                if bodyVelocity then bodyVelocity:Destroy() end
+                if hum then hum.PlatformStand = false end
+            end
+        end
+        return _G.Flying
+    end)
+
+    local speedFrame = Create("Frame", SubList, {BackgroundColor3 = Color3.fromRGB(25, 25, 25), BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 34)})
+    AddCorner(speedFrame, UDim.new(0, 5))
+    Create("TextLabel", speedFrame, {BackgroundTransparency = 1, Position = UDim2.new(0, 8, 0, 0), Size = UDim2.new(0.6, 0, 1, 0), Font = Enum.Font.GothamSemibold, Text = "  Tốc độ Bay:", TextColor3 = Color3.fromRGB(200, 200, 200), TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left})
+    local speedBox = Create("TextBox", speedFrame, {BackgroundColor3 = Color3.fromRGB(35, 35, 35), BorderSizePixel = 0, Position = UDim2.new(0.65, 0, 0.15, 0), Size = UDim2.new(0.3, 0, 0.7, 0), Font = Enum.Font.GothamBold, Text = tostring(_G.FlySpeed), TextColor3 = Color3.fromRGB(0, 255, 127), TextSize = 11})
+    AddCorner(speedBox, UDim.new(0, 4))
+    speedBox.FocusLost:Connect(function()
+        _G.FlySpeed = tonumber(speedBox.Text) or _G.FlySpeed
+        speedBox.Text = tostring(_G.FlySpeed)
+    end)
+end)
+
+MiniButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    if not MainFrame.Visible then SubMenu.Visible, SubSubMenu.Visible = false, false end
+end)
+
+local function GetRole(p)
+    if not p.Character then return nil, nil end
+    if p.Character:FindFirstChild("Knife") or (p.Backpack and p.Backpack:FindFirstChild("Knife")) then 
+        return Color3.fromRGB(255, 0, 0), "Murderer" 
+    end
+    if p.Character:FindFirstChild("Gun") or (p.Backpack and p.Backpack:FindFirstChild("Gun")) then 
+        return Color3.fromRGB(0, 0, 255), "Sheriff" 
+    end
+    return Color3.fromRGB(0, 255, 0), "Innocent"
+end
+
+RunService.RenderStepped:Connect(function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = p.Character.HumanoidRootPart
+            local hl = hrp:FindFirstChild("CleanMM2ESP")
+            local col, role = GetRole(p)
+            local show = (role == "Innocent" and _G.ESPInnocent) or (role == "Sheriff" and _G.ESPSheriff) or (role == "Murderer" and _G.ESPMurderer)
+            if show then
+                if not hl then
+                    hl = Create("Highlight", hrp, {Name = "CleanMM2ESP", Adornee = p.Character, DepthMode = Enum.HighlightDepthMode.AlwaysOnTop})
+                end
+                hl.FillColor = col
+            elseif hl then hl:Destroy() end
+        end
+    end
+
+    if _G.Noclip and LP.Character then
+        for _, part in pairs(LP.Character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = false end end
+    end
+
+    if _G.Flying then
+        pcall(function()
+            local char = LP.Character
+            local hrp, hum = char and char:FindFirstChild("HumanoidRootPart"), char and char:FindFirstChildOfClass("Humanoid")
+            if hrp and hum and bodyGyro and bodyVelocity then
+                bodyGyro.CFrame = Camera.CFrame
+                local moveDir = hum.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    local camCF = Camera.CFrame
+                    local localMove = camCF:VectorToObjectSpace(moveDir)
+                    local flyDir = (camCF.LookVector * -localMove.Z) + (camCF.RightVector * localMove.X)
+                    bodyVelocity.Velocity = (flyDir.Magnitude > 0 and flyDir.Unit or Vector3.new()) * _G.FlySpeed
+                else
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+        end)
+    end
+
+    -- ==================== AIMBOT SHERIFF (BẮN SÚNG GHIM THẲNG VÀO ĐẦU 100%) ====================
+    if _G.AimbotSheriff then
+        pcall(function()
+            local targetHead = nil
+            local shortestDist = math.huge
+            local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, (Camera.ViewportSize.Y / 2) - 25)
+
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LP and p.Character then
+                    local _, role = GetRole(p)
+                    local hum = p.Character:FindFirstChild("Humanoid")
+                    local head = p.Character:FindFirstChild("Head")
+
+                    if (role == "Murderer" or p.Character:FindFirstChild("Knife") or (p.Backpack and p.Backpack:FindFirstChild("Knife"))) and hum and hum.Health > 0 and head then
+                        local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                        if onScreen then
+                            local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                            if dist <= FOVRadius and dist < shortestDist then
+                                shortestDist = dist
+                                targetHead = head
+                            end
+                        end
+                    end
+                end
+            end
+
+            if targetHead then
+                local targetPos = targetHead.Position
+                -- Khóa góc nhìn camera hướng thẳng tuyệt đối vào phần đầu mục tiêu
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+                
+                local char = LP.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local gun = char:FindFirstChild("Gun") or (LP.Backpack and LP.Backpack:FindFirstChild("Gun"))
+                    if gun then
+                        if gun.Parent ~= char then
+                            char.Humanoid:EquipTool(gun)
+                        end
+                        for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
+                            if remote:IsA("RemoteEvent") and (remote.Name:lower():find("shoot") or remote.Name:lower():find("gun")) then
+                                remote:FireServer(targetPos)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    -- ==================== AIMBOT MURDERER (TELEPORT VÀ GHIM THẲNG VÀO ĐẦU 100%) ====================
+    if _G.AimbotMurderer then
+        pcall(function()
+            local char = LP.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local knife = char and (char:FindFirstChild("Knife") or (LP.Backpack and LP.Backpack:FindFirstChild("Knife")))
+            
+            local isInLobby = false
+            if hrp and hrp.Position.Y < -5 then
+                isInLobby = true
+            end
+
+            if hrp and knife and not isInLobby then
+                if knife.Parent ~= char then
+                    LP.Character.Humanoid:EquipTool(knife)
+                end
+                
+                local nearestHead = nil
+                local minDist = math.huge
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local pChar = p.Character
+                        local head = pChar:FindFirstChild("Head")
+                        local hum = pChar:FindFirstChild("Humanoid")
+                        
+                        if hum and hum.Health > 0 and head and head.Position.Y > -5 then
+                            local dist = (hrp.Position - head.Position).Magnitude
+                            if dist < minDist and dist < 150 then
+                                minDist = dist
+                                nearestHead = head
+                            end
+                        end
+                    end
+                end
+                
+                -- Dịch chuyển ghim thẳng ngay sát vùng đầu/mặt mục tiêu để chém trúng 100%
+                if nearestHead then
+                    hrp.CFrame = nearestHead.CFrame * CFrame.new(0, 2.5, 0.5)
+                    knife:Activate()
+                end
+            end
+        end)
+    end
+end)
