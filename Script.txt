@@ -677,7 +677,7 @@ task.spawn(function()
                             if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                                 local tHum = p.Character:FindFirstChildOfClass("Humanoid")
                                 if tHum and tHum.Health > 0 and not IsInLobby(p.Character) then
-                                    if (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude < 25 then
+                                    if (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude < 60 then
                                         knife:Activate()
                                         firetouchinterest(handle, p.Character.HumanoidRootPart, 0)
                                         task.wait(0.01)
