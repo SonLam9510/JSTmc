@@ -837,7 +837,7 @@ task.spawn(function()
                     local targetCF = coinPart.CFrame
                     local startCF = hrp.CFrame
                     local dist = (startCF.Position - targetCF.Position).Magnitude
-                    local speed = 40
+                    local speed = 20
                     local duration = math.clamp(dist / speed, 0.05, 1.2)
                     local elapsed = 0
                     
