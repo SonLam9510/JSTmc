@@ -666,29 +666,31 @@ task.spawn(function()
                 end
             end
 
-            -- 2. Kill Aura
-            if _G.AimbotMurderer then
-                local knife = char:FindFirstChild("Knife") or (LP.Backpack and LP.Backpack:FindFirstChild("Knife"))
-                if knife then
-                    if knife.Parent == LP.Backpack then hum:EquipTool(knife) task.wait(0.1) end
-                    local handle = knife:FindFirstChild("Handle")
-                    if handle then
-                        for _, p in pairs(Players:GetPlayers()) do
-                            if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                                local tHum = p.Character:FindFirstChildOfClass("Humanoid")
-                                if tHum and tHum.Health > 0 and not IsInLobby(p.Character) then
-                                    if (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude < 60 then
-                                        knife:Activate()
-                                        firetouchinterest(handle, p.Character.HumanoidRootPart, 0)
-                                        task.wait(0.01)
-                                        firetouchinterest(handle, p.Character.HumanoidRootPart, 1)
-                                    end
-                                end
-                            end
+            -- 2. Kill Aura (Đứng từ xa chém không cần lại gần)
+if _G.AimbotMurderer then
+    local knife = char:FindFirstChild("Knife") or (LP.Backpack and LP.Backpack:FindFirstChild("Knife"))
+    if knife then
+        if knife.Parent == LP.Backpack then hum:EquipTool(knife) task.wait(0.1) end
+        local handle = knife:FindFirstChild("Handle")
+        if handle then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local tHum = p.Character:FindFirstChildOfClass("Humanoid")
+                    if tHum and tHum.Health > 0 and not IsInLobby(p.Character) then
+                        -- Tăng số 60 thành số lớn hơn nếu muốn đứng xa hơn nữa (ví dụ: 80, 100)
+                        if (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude < 60 then
+                            knife:Activate()
+                            firetouchinterest(handle, p.Character.HumanoidRootPart, 0)
+                            task.wait(0.01)
+                            firetouchinterest(handle, p.Character.HumanoidRootPart, 1)
                         end
                     end
                 end
             end
+        end
+    end
+end
+
 
             -- 3. Tự Động Giết 1 Người Cụ Thể hoặc Kill ALL
             if _G.TargetPlayerToKill then
@@ -818,56 +820,54 @@ task.spawn(function()
             end
 
             -- 5. Tự Động Nhặt Xu
-            if _G.AutoCollectCoins then
-                local coins = {}
-                for _, obj in ipairs(Workspace:GetDescendants()) do
-                    if not _G.AutoCollectCoins then break end
-                    if obj.Name == "Coin" or obj.Name == "CoinVisual" or (obj:IsA("BasePart") and obj.Parent and (obj.Parent.Name == "CoinContainer" or obj.Parent.Name == "Coins")) then
-                        local coinPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
-                        if coinPart and coinPart.Parent then
-                            table.insert(coins, coinPart)
-                        end
-                    end
-                end
-
-                for _, coinPart in ipairs(coins) do
-                    if not _G.AutoCollectCoins then break end
-                    if not coinPart or not coinPart.Parent then continue end
-                    
-                    local targetCF = coinPart.CFrame
-                    local startCF = hrp.CFrame
-                    local dist = (startCF.Position - targetCF.Position).Magnitude
-                    local speed = 20
-                    local duration = math.clamp(dist / speed, 0.05, 1.2)
-                    local elapsed = 0
-                    
-                    while elapsed < duration do
-                        if not _G.AutoCollectCoins then break end
-                        elapsed = elapsed + RunService.RenderStepped:Wait()
-                        local alpha = math.clamp(elapsed / duration, 0, 1)
-                        hrp.CFrame = startCF:Lerp(targetCF, alpha)
-                        
-                        for _, part in pairs(char:GetDescendants()) do
-                            if part:IsA("BasePart") then part.CanCollide = false end
-                        end
-                    end
-                    
-                    if not _G.AutoCollectCoins then break end
-                    hrp.CFrame = targetCF
-                    firetouchinterest(hrp, coinPart, 0)
-                    task.wait(0.04)
-                    firetouchinterest(hrp, coinPart, 1)
-                    task.wait(0.04)
-                end
-                
-                if #coins == 0 then
-                    task.wait(0.5)
-                end
+            -- 5. Tự Động Nhặt Xu (Đã fix chống bị Kick)
+if _G.AutoCollectCoins then
+    local coins = {}
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if not _G.AutoCollectCoins then break end
+        if obj.Name == "Coin" or obj.Name == "CoinVisual" or (obj:IsA("BasePart") and obj.Parent and (obj.Parent.Name == "CoinContainer" or obj.Parent.Name == "Coins")) then
+            local coinPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+            if coinPart and coinPart.Parent then
+                table.insert(coins, coinPart)
             end
-
-        end)
+        end
     end
-end)
+
+    for _, coinPart in ipairs(coins) do
+        if not _G.AutoCollectCoins then break end
+        if not coinPart or not coinPart.Parent then continue end
+        
+        local targetCF = coinPart.CFrame
+        local startCF = hrp.CFrame
+        local dist = (startCF.Position - targetCF.Position).Magnitude
+        local speed = 30  -- Giảm tốc độ bay xuống 30 để đi mượt và an toàn hơn
+        local duration = math.clamp(dist / speed, 0.1, 2.0)
+        local elapsed = 0
+        
+        while elapsed < duration do
+            if not _G.AutoCollectCoins then break end
+            elapsed = elapsed + RunService.RenderStepped:Wait()
+            local alpha = math.clamp(elapsed / duration, 0, 1)
+            hrp.CFrame = startCF:Lerp(targetCF, alpha)
+            
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+        
+        if not _G.AutoCollectCoins then break end
+        hrp.CFrame = targetCF
+        firetouchinterest(hrp, coinPart, 0)
+        task.wait(0.05)
+        firetouchinterest(hrp, coinPart, 1)
+        task.wait(0.1) -- Thêm khoảng nghỉ ngắn giữa mỗi lần nhặt xu để không bị server phát hiện spam
+    end
+    
+    if #coins == 0 then
+        task.wait(0.5)
+    end
+end
+
 
 -- ==================== VÒNG LẶP RENDER CHÍNH ====================
 RunService.RenderStepped:Connect(function()
